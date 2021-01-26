@@ -98,6 +98,29 @@ impl<K: Eq + Hash, V: ResidentSize> MemoryLruCache<K, V> {
         self.cur_size
     }
 
+    /// Returns the number of key-value pairs that are currently in the cache.
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    /// Returns a bool indicating whether the given key is in the cache.
+    /// Does not update the LRU list.
+    pub fn contains(&self, key: &K) -> bool {
+        self.inner.contains(key)
+    }
+
+    /// Returns a bool indicating whether the cache is empty or not.
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    /// Returns a reference to the value corresponding to the key in the cache or
+    /// None if it is not present in the cache. Unlike get, peek does not update the
+    /// LRU list so the key's position will be unchanged.
+    pub fn peek(&self, key: &K) -> Option<&V> {
+        self.inner.peek(key)
+    }
+
     fn readjust_down(&mut self) {
         // remove elements until we are below the memory target.
         while self.cur_size > self.max_size {
@@ -124,6 +147,7 @@ mod tests {
         let mut cache = MemoryLruCache::new(256);
         let val1 = vec![0u8; 100];
         let size1 = val1.resident_size();
+        assert_eq!(cache.len(), 0);
         cache.insert("hello", val1);
 
         assert_eq!(cache.current_size(), size1);
@@ -136,5 +160,6 @@ mod tests {
         assert!(cache.get(&"world").is_some());
 
         assert_eq!(cache.current_size(), size2);
+        assert_eq!(cache.len(), 1);
     }
 }
