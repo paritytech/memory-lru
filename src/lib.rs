@@ -103,6 +103,24 @@ impl<K: Eq + Hash, V: ResidentSize> MemoryLruCache<K, V> {
 		self.inner.len()
 	}
 
+	/// Returns a bool indicating whether the given key is in the cache.
+	/// Does not update the LRU list.
+	pub fn contains(&self, key: &K) -> bool {
+		self.inner.contains(key)
+	}
+
+	/// Returns a bool indicating whether the cache is empty or not.
+	pub fn is_empty(&self) -> bool {
+		self.inner.is_empty()
+	}
+
+	/// Returns a reference to the value corresponding to the key in the cache or
+	/// None if it is not present in the cache. Unlike get, peek does not update the
+	/// LRU list so the key's position will be unchanged.
+	pub fn peek(&self, key: &K) -> Option<&V> {
+		self.inner.peek(key)
+	}
+
     fn readjust_down(&mut self) {
         // remove elements until we are below the memory target.
         while self.cur_size > self.max_size {
