@@ -56,7 +56,7 @@ impl<K: Eq + Hash, V: ResidentSize> MemoryLruCache<K, V> {
 
         // grow the cache as necessary; it operates on amount of items
         // but we're working based on memory usage.
-        if self.inner.len() == cap && self.cur_size < self.max_size {
+        if self.inner.len() == cap {
             self.inner.resize(cap * 2);
         }
 
@@ -161,5 +161,17 @@ mod tests {
 
         assert_eq!(cache.current_size(), size2);
         assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
+    fn it_works_if_cur_size_equals_max_size() {
+        let mut cache = MemoryLruCache::new(8);
+        cache.insert(1, vec![0u8, 1u8]);
+        cache.insert(2, vec![2u8, 3u8]);
+        cache.insert(3, vec![4u8, 5u8]);
+        cache.insert(4, vec![6u8, 7u8]);
+        cache.insert(5, vec![8u8, 9u8]);
+
+        assert_eq!(Some(&vec![2u8, 3u8]), cache.get(&2));
     }
 }
