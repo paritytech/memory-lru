@@ -58,7 +58,7 @@ impl<K: Eq + Hash, V: ResidentSize> MemoryLruCache<K, V> {
         // grow the cache as necessary; it operates on amount of items
         // but we're working based on memory usage.
         if self.inner.len() == cap {
-            let next_cap = NonZeroUsize::new(cap * 2).expect("too many elements");
+            let next_cap = NonZeroUsize::new(cap.saturating_mul(2)).expect("only returns None if value is zero; cap is guaranteed to be non-zero; qed");
             self.inner.resize(next_cap);
         }
 
