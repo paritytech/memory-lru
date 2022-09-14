@@ -23,8 +23,9 @@
 use lru::LruCache;
 
 use std::hash::Hash;
+use std::num::NonZeroUsize;
 
-const INITIAL_CAPACITY: usize = 4;
+const INITIAL_CAPACITY: Option<NonZeroUsize> = NonZeroUsize::new(4);
 
 /// An indicator of the resident in memory of a value.
 pub trait ResidentSize {
@@ -44,7 +45,7 @@ impl<K: Eq + Hash, V: ResidentSize> MemoryLruCache<K, V> {
     /// Create a new cache with a maximum cumulative size of values.
     pub fn new(max_size: usize) -> Self {
         MemoryLruCache {
-            inner: LruCache::new(INITIAL_CAPACITY),
+            inner: LruCache::new(INITIAL_CAPACITY.expect("4 != 0; qed")),
             max_size: max_size,
             cur_size: 0,
         }
@@ -52,12 +53,13 @@ impl<K: Eq + Hash, V: ResidentSize> MemoryLruCache<K, V> {
 
     /// Insert an item.
     pub fn insert(&mut self, key: K, val: V) {
-        let cap = self.inner.cap();
+        let cap = self.inner.cap().get();
 
         // grow the cache as necessary; it operates on amount of items
         // but we're working based on memory usage.
         if self.inner.len() == cap {
-            self.inner.resize(cap * 2);
+            let next_cap = NonZeroUsize::new(cap * 2).expect("too many elements");
+            self.inner.resize(next_cap);
         }
 
         self.cur_size += val.resident_size();
@@ -73,7 +75,7 @@ impl<K: Eq + Hash, V: ResidentSize> MemoryLruCache<K, V> {
     /// Get a reference to an item in the cache. It is a logic error for its
     /// heap size to be altered while borrowed.
     pub fn get(&mut self, key: &K) -> Option<&V> {
-       self.inner.get(key)
+        self.inner.get(key)
     }
 
     /// Execute a closure with the value under the provided key.
